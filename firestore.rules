@@ -1,0 +1,35 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Inquiries submitted through the public landing-page form.
+    match /inquiries/{inquiryId} {
+      // Unauthenticated visitors may CREATE an inquiry, but only when the
+      // document has exactly the expected shape and valid field values.
+      // Note: serverTimestamp() resolves to the request time during rule
+      // evaluation, so it can be validated as a timestamp equal to request.time.
+      allow create: if request.resource.data.keys().hasOnly(['name', 'email', 'message', 'createdAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 2
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.email is string
+        && request.resource.data.email.size() >= 3
+        && request.resource.data.email.size() <= 254
+        && request.resource.data.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$')
+        && request.resource.data.message is string
+        && request.resource.data.message.size() >= 10
+        && request.resource.data.message.size() <= 2000
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.createdAt == request.time;
+
+      // No public reads, updates, or deletes of inquiries.
+      allow read, update, delete: if false;
+    }
+
+    // Deny access to every other document by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

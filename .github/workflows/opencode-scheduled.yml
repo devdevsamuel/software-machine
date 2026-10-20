@@ -1,0 +1,40 @@
+
+name: OpenCode Portfolio Audit
+
+on:
+  schedule:
+    - cron: "0 14 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Run OpenCode audit
+        uses: anomalyco/opencode/github@latest
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+        with:
+          model: opencode/big-pickle
+          prompt: |
+            Audit this portfolio repository.
+
+            Check for:
+            - TypeScript and build errors.
+            - Accessibility issues.
+            - Responsive design problems.
+            - Obvious bugs and maintainability concerns.
+
+            Do not modify files.
+            Do not commit or create pull requests.
+            Provide a concise, prioritized report of findings.
